@@ -23,14 +23,20 @@ namespace stock_quote_alert
                 const string path = "MailConfFile.json";
                 var serializer = new JsonSerializer();
                 MailConf conf = new MailConf();
-                using (var streamReader = new StreamReader(path))
-                using (var jsonText = new JsonTextReader(streamReader))
+
+                try
                 {
-                    conf = serializer.Deserialize<MailConf>(jsonText);
+                    using (var streamReader = new StreamReader(path))
+                    using (var jsonText = new JsonTextReader(streamReader))
+                    {
+                        conf = serializer.Deserialize<MailConf>(jsonText);
+                    }
                 }
-                
-                
-                
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error opening file.\n");
+                    Console.WriteLine(e.Message);
+                }
 
                 return conf;
             }

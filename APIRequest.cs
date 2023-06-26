@@ -23,27 +23,33 @@ namespace stock_quote_alert
     {
         public async Task<double> LastPrice(string Symbol)
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri("https://mfinance.com.br/");
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            try
+            {
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri("https://mfinance.com.br/");
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                HttpResponseMessage responseJSON = await client.GetAsync($"api/v1/stocks/{Symbol}");
+                responseJSON.EnsureSuccessStatusCode();
 
+                //Showing the status of the http request
+                //Console.WriteLine(responseJSON.StatusCode.ToString());
 
-            HttpResponseMessage responseJSON = await client.GetAsync($"api/v1/stocks/{Symbol}");
-            //Console.WriteLine(responseJSON.Content.ToString());
+                HttpContent content = responseJSON.Content;
+                string data = await content.ReadAsStringAsync();
+
+                //Turning JSON in an object.
+                StockData stockData = JsonConvert.DeserializeObject<StockData>(data);
+
+                client.Dispose();
+                return stockData.lastPrice;
+
+            }
+            catch (HttpRequestException ex) 
+            {
+                Console.WriteLine(ex.Message);
+                return -1;
+            }
             
-            //Showing the status of the http request
-            HttpStatusCode statusCode = responseJSON.StatusCode;
-            //Console.WriteLine(statusCode.ToString());
-
-            HttpContent content = responseJSON.Content;
-            string data = await content.ReadAsStringAsync();
-            //Console.WriteLine(data);
-
-            //Turning JSON in an object.
-            StockData stockData = JsonConvert.DeserializeObject<StockData>(data);
-
-            client.Dispose();
-            return stockData.lastPrice;
         }
     }
 }

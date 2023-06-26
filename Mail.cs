@@ -33,7 +33,8 @@ namespace stock_quote_alert
             }
             catch (SmtpException e)
             {
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("Error sending the email.\n");
+                Console.WriteLine(e.Message);
             }
 
         }
