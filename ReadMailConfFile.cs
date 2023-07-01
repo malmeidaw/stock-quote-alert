@@ -8,21 +8,21 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace stock_quote_alert
+namespace StockQuoteAlert
 {
-    internal interface ReadMailConfFile
+    internal interface IReadMailConfFile
     {
         public MailConf MailConfFromFile();
 
     }
-    public class MailConfRead : ReadMailConfFile
+    public class MailConfRead : IReadMailConfFile
     {
         public MailConf MailConfFromFile()
         {
             {
                 const string path = "MailConfFile.json";
                 var serializer = new JsonSerializer();
-                MailConf conf = new MailConf();
+                MailConf? conf = new MailConf();
 
                 try
                 {
@@ -31,24 +31,28 @@ namespace stock_quote_alert
                     {
                         conf = serializer.Deserialize<MailConf>(jsonText);
                     }
+                    if (conf == null) throw new ArgumentNullException();
+                    
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error opening file.\n");
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("\nError opening file.\n");
+                    Console.WriteLine(e.Message);   
                 }
-
                 return conf;
+
             }
         }
     }
     public class MailConf
     {
-        public string ToAddress { get; set; }
-        public string FromAddress { get; set; }
-        public string SmtpHost { get; set; }
-        public int SmtpPort { get; set; }
-        public string SmtpUsername { get; set; }
-        public string SmtpPassword { get; set; }
+        public string? toAddress { get; set; }
+        public string? fromAddress { get; set; }
+        public string? smtpHost { get; set; }
+        public int smtpPort { get; set; }
+        public string? smtpUsername { get; set; }
+        public string? smtpPassword { get; set; }
+
+
     }
 }

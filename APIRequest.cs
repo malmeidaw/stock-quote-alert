@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace stock_quote_alert
+namespace StockQuoteAlert
 {
     internal interface IAPIRequest
     {
@@ -16,7 +16,7 @@ namespace stock_quote_alert
     }
     public class StockData
     {
-        public string symbol { get; set; }
+        public string? symbol { get; set; }
         public double lastPrice { get; set; }
     }
     public class APIRequest : IAPIRequest
@@ -38,13 +38,14 @@ namespace stock_quote_alert
                 string data = await content.ReadAsStringAsync();
 
                 //Turning JSON in an object.
-                StockData stockData = JsonConvert.DeserializeObject<StockData>(data);
-
+                StockData? stockData = JsonConvert.DeserializeObject<StockData>(data) ?? throw new ArgumentNullException();
+                
                 client.Dispose();
+                
                 return stockData.lastPrice;
 
             }
-            catch (HttpRequestException ex) 
+            catch (Exception ex) 
             {
                 Console.WriteLine(ex.Message);
                 return -1;

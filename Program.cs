@@ -1,29 +1,31 @@
-﻿namespace stock_quote_alert
+﻿namespace StockQuoteAlert
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            string Symbol;
-            double SellingReference;
-            double BuyingReference;
+            string symbol;
+            double sellingReference;
+            double buyingReference;
             if (args.Length == 3) 
             {
-                Symbol = args[0];
-                SellingReference = double.Parse(args[1]);
-                BuyingReference = double.Parse(args[2]);
+                symbol = args[0];
+                double.TryParse(args[1], out sellingReference);
+                double.TryParse(args[2], out buyingReference);
             }
             else
             {
                 Console.Write("Symbol SellingReference BuyingReference: ");
-                string UserInput = Console.ReadLine();
-                char[] Separator = { ' ' };
-                string[] argsInput = UserInput.Split(Separator);
                 try
                 {
-                    Symbol = argsInput[0];
-                    SellingReference = double.Parse(argsInput[1]);
-                    BuyingReference = double.Parse(argsInput[2]);
+                    string? userInput = Console.ReadLine();
+                    if (string.IsNullOrWhiteSpace(userInput)) throw new ArgumentNullException();
+                    char[] Separator = { ' ' };
+                    string[] argsInput = userInput.Split(Separator);
+                    if (argsInput.Length != 3) throw new ArgumentException();
+                    symbol = argsInput[0];
+                    double.TryParse(argsInput[1], out sellingReference);
+                    double.TryParse(argsInput[2], out buyingReference);
                 }
                 catch (Exception ex)
                 {
@@ -32,52 +34,48 @@
                     return;
                 }
             }
+
             double lastPrice = -1;
+            string recommendationBuying = String.Format("Buy {0}", symbol);
+            string emailBodyBuying = String.Format("We recommend buying a position in {0}, as its is now lower than {1}. Current price: ", symbol, buyingReference);
+            string recommendationSelling = String.Format("Sell {0}", symbol);
+            string emailBodySelling = String.Format("We recommend selling your position in {0}, as its price has exceeded the value of {1}. Current price: ", symbol,  sellingReference);
 
             while (true)
             {
                 APIRequest a = new APIRequest();
-                double price = a.LastPrice(Symbol).Result;
+                double price = a.LastPrice(symbol).Result;
                 if (price == -1) break;
                 
                 if (lastPrice!=price)
                 {
-                    if (price >= SellingReference)
+                    if (price >= sellingReference)
                     {
-                        Mail SellingMail = new Mail();
-                        MailConfRead mailConfRead = new MailConfRead();
-                        MailConf mailConf = new MailConf();
-                        mailConf = mailConfRead.MailConfFromFile();
-                        if (mailConf.ToAddress is null) break;
-
-                        string Recommendation = String.Format("Sell {0}", Symbol);
-                        string EmailBody = String.Format("We recommend selling your position in {0}, as its current price of {1} has exceeded the value of {2}.", Symbol, price, SellingReference);
-
-                        SellingMail.sendMail(mailConf, Recommendation, EmailBody);
+                        if (!SendMail(recommendationSelling, emailBodySelling + price)) break;
                     }
-                    if (price <= BuyingReference)
+                    if (price <= buyingReference)
                     {
-                        Mail SellingMail = new Mail();
-                        MailConfRead mailConfRead = new MailConfRead();
-                        MailConf mailConf = new MailConf();
-                        mailConf = mailConfRead.MailConfFromFile();
-                        if (mailConf.ToAddress is null) break;
-
-                        string Recommendation = String.Format("Buy {0}", Symbol);
-                        string EmailBody = String.Format("We recommend buying a position in {0}, as its current price of {1} is lower than {2}.", Symbol, price, BuyingReference);
-
-                        SellingMail.sendMail(mailConf, Recommendation, EmailBody);
+                        if (!SendMail(recommendationBuying, emailBodyBuying + price)) break;
                     }
                 }
-                Console.WriteLine($"Monitoring {Symbol}. Current price is {price}");
+                Console.WriteLine($"Monitoring {symbol}. Current price is {price}");
                 lastPrice = price;
-                //Console.WriteLine(price);
-                //Thread.Sleep(60000);
+                
+                
                 Thread.Sleep(10000);
                 
             }
             
             Console.ReadKey();
             }
+        static bool SendMail(string recommendation,string emailBody)
+        {
+            Mail sellingMail = new Mail();
+            MailConfRead mailConfRead = new MailConfRead();
+            MailConf mailConf = mailConfRead.MailConfFromFile();
+            if (mailConf is null) return false;
+            return sellingMail.sendMail(mailConf, recommendation, emailBody);
+            
+        }
     }
 }
